@@ -3,6 +3,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
+from torchsummary import summary
 
 # get training data
 training_data = datasets.CIFAR10(
@@ -24,21 +25,19 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
         self.stack = nn.Sequential(
+            nn.Conv2d(
+                in_channels=3,
+                out_channels=10,
+                kernel_size=3,
+                padding=1
+            ),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+
             nn.Flatten(),
-            nn.Linear(
-                in_features=3*32*32,
-                out_features=1024
-            ),
+            nn.Linear(10*16*16, 512),
             nn.ReLU(),
-            nn.Linear(
-                in_features=1024,
-                out_features=256
-            ),
-            nn.ReLU(),
-            nn.Linear(
-                in_features=256,
-                out_features=10
-            )
+            nn.Linear(512, 10)
         )
 
     def forward(self, x):
@@ -101,6 +100,8 @@ if __name__ == "__main__":
         train()
         train_test()
     print("Done!")
+
+    summary(model, input_size=(3, 32, 32))
 
     torch.save(model.state_dict(), "model.pth")
     print("Saved PyTorch Model State to model.pth")

@@ -3,6 +3,8 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
+# get the model architecture
+import train
 
 # get testing data
 test_data = datasets.CIFAR10(
@@ -17,10 +19,29 @@ batch_size = 64
 dataloader = DataLoader(test_data, batch_size=batch_size)
 
 if __name__ == "__main__":
-    # setup model
-    # train model
-    # store into .pth file
-    for X, y in dataloader:
-        print(f"Shape of X [N, C, H, W]: {X.shape}")
-        print(f"Shape of y: {y.shape} {y.dtype}")
-        break
+    # load model
+    model = train.NeuralNetwork().to(device)
+    model.load_state_dict(torch.load("model.pth", weights_only=True))
+
+    # same loss function
+    loss_fn = nn.CrossEntropyLoss()
+
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    # testing mode
+    model.eval()
+    test_loss, correct = 0, 0
+    # for every item in the test set
+    with torch.no_grad():
+        for X, y in dataloader:
+            # put input and label on cpu
+            X, y = X.to(device), y.to(device)
+            # make a guess
+            guess = model(X)
+            # track loss and correctness
+            test_loss += loss_fn(guess, y).item()
+            correct += (guess.argmax(1) == y).type(torch.float).sum().item()
+    # average 
+    test_loss /= num_batches
+    correct /= size
+    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
