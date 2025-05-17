@@ -1,8 +1,7 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from torchvision import datasets
-from torchvision.transforms import ToTensor
+from torchvision import datasets, transforms
 # get the model architecture from train.py
 import train
 
@@ -11,7 +10,7 @@ test_data = datasets.CIFAR10(
     root="data",
     train=False,
     download=True,
-    transform=ToTensor()
+    transform=transforms.ToTensor()
 )
 
 DEVICE = torch.device("cpu")
@@ -21,7 +20,7 @@ dataloader = DataLoader(test_data, batch_size=BATCH_SIZE)
 if __name__ == "__main__":
     # load model
     model = train.NeuralNetwork().to(DEVICE)
-    model.load_state_dict(torch.load("model.pth", weights_only=True, map_location=DEVICE))
+    model.load_state_dict(torch.load("model.pth", weights_only=True))
 
     # same loss function
     loss_fn = nn.CrossEntropyLoss()
