@@ -25,9 +25,20 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
         self.stack = nn.Sequential(
+            # 3x32x32 -> 16x16x16
             nn.Conv2d(
                 in_channels=3,
-                out_channels=10,
+                out_channels=16,
+                kernel_size=3,
+                padding=1
+            ),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+
+            # 16x16x16 -> 32x8x8
+            nn.Conv2d(
+                in_channels=16,
+                out_channels=32,
                 kernel_size=3,
                 padding=1
             ),
@@ -35,9 +46,11 @@ class NeuralNetwork(nn.Module):
             nn.MaxPool2d(kernel_size=2),
 
             nn.Flatten(),
-            nn.Linear(10*16*16, 512),
+            nn.Linear(in_features=32*8*8, 
+                      out_features=512),
             nn.ReLU(),
-            nn.Linear(512, 10)
+            nn.Linear(in_features=512, 
+                      out_features=10)
         )
 
     def forward(self, x):
