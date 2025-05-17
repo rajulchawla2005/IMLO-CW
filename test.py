@@ -3,7 +3,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import ToTensor
-# get the model architecture
+# get the model architecture from train.py
 import train
 
 # get testing data
@@ -14,14 +14,14 @@ test_data = datasets.CIFAR10(
     transform=ToTensor()
 )
 
-device = torch.device("cpu")
-batch_size = 64
-dataloader = DataLoader(test_data, batch_size=batch_size)
+DEVICE = torch.device("cpu")
+BATCH_SIZE = 64
+dataloader = DataLoader(test_data, batch_size=BATCH_SIZE)
 
 if __name__ == "__main__":
     # load model
-    model = train.NeuralNetwork().to(device)
-    model.load_state_dict(torch.load("model.pth", weights_only=True))
+    model = train.NeuralNetwork().to(DEVICE)
+    model.load_state_dict(torch.load("model.pth", weights_only=True, map_location=DEVICE))
 
     # same loss function
     loss_fn = nn.CrossEntropyLoss()
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     with torch.no_grad():
         for X, y in dataloader:
             # put input and label on cpu
-            X, y = X.to(device), y.to(device)
+            X, y = X.to(DEVICE), y.to(DEVICE)
             # make a guess
             guess = model(X)
             # track loss and correctness
