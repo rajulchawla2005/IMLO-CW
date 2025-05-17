@@ -7,12 +7,19 @@ from torchsummary import summary
 
 import time
 
+train_transform = transforms.Compose([
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomRotation(15),
+    transforms.ToTensor()
+])
+
 # get training data
 training_data = datasets.CIFAR10(
     root="data",
     train=True,
     download=True,
-    transform=transforms.ToTensor()
+    transform=train_transform
 )
 
 train_set, val_set = torch.utils.data.random_split(training_data, [40000, 10000])
@@ -27,19 +34,9 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
         self.stack = nn.Sequential(
-            # 3x32x32 -> 16x16x16
+            # 3x32x32 -> 32x16x16
             nn.Conv2d(
                 in_channels=3,
-                out_channels=16,
-                kernel_size=3,
-                padding=1
-            ),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-
-            # 16x16x16 -> 32x8x8
-            nn.Conv2d(
-                in_channels=16,
                 out_channels=32,
                 kernel_size=3,
                 padding=1
@@ -47,8 +44,28 @@ class NeuralNetwork(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
 
+            # 32x16x16 -> 64x8x8
+            nn.Conv2d(
+                in_channels=32,
+                out_channels=64,
+                kernel_size=3,
+                padding=1
+            ),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+
+            # 64x8x8 -> 128x4x4
+            nn.Conv2d(
+                in_channels=64,
+                out_channels=128,
+                kernel_size=3,
+                padding=1
+            ),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+
             nn.Flatten(),
-            nn.Linear(in_features=32*8*8, 
+            nn.Linear(in_features=128*4*4, 
                       out_features=512),
             nn.ReLU(),
             nn.Dropout(0.5),
@@ -77,11 +94,11 @@ def train():
         optimiser.step()
         optimiser.zero_grad()
 
-        if batch % 100 == 0:
+        if batch % 50 == 0:
             loss, current = loss.item(), (batch + 1) * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
-def train_test():
+def validate():
     size = len(test_dataloader.dataset)
     num_batches = len(test_dataloader)
     # testing mode
@@ -109,7 +126,7 @@ if __name__ == "__main__":
 
     model = NeuralNetwork().to(device)
     loss_fn = nn.CrossEntropyLoss()
-    optimiser = torch.optim.SGD(model.parameters(), lr=0.25)
+    optimiser = torch.optim.SGD(model.parameters(), lr=0.35, weight_decay=0.0001)
     # half the learning rate every 5 epochs
     scheduler = torch.optim.lr_scheduler.StepLR(optimiser, step_size=5, gamma=0.5)
 
@@ -117,7 +134,7 @@ if __name__ == "__main__":
         print(f"Epoch {t+1}\n")
         start_time = time.time()
         train()
-        train_test()
+        validate()
         end_time = time.time()
         print(f"Took {end_time-start_time} seconds")
         scheduler.step()
