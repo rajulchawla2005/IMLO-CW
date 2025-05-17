@@ -2,20 +2,22 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import datasets
-from torchvision.transforms import ToTensor
+from torchvision import transforms
 from torchsummary import summary
+
+import time
 
 # get training data
 training_data = datasets.CIFAR10(
     root="data",
     train=True,
     download=True,
-    transform=ToTensor()
+    transform=transforms.ToTensor()
 )
 
 train_set, val_set = torch.utils.data.random_split(training_data, [40000, 10000])
 
-epochs = 5
+epochs = 25
 device = torch.device("cpu")
 batch_size = 64
 train_dataloader = DataLoader(train_set, batch_size=batch_size)
@@ -49,6 +51,7 @@ class NeuralNetwork(nn.Module):
             nn.Linear(in_features=32*8*8, 
                       out_features=512),
             nn.ReLU(),
+            nn.Dropout(0.5),
             nn.Linear(in_features=512, 
                       out_features=10)
         )
@@ -106,12 +109,18 @@ if __name__ == "__main__":
 
     model = NeuralNetwork().to(device)
     loss_fn = nn.CrossEntropyLoss()
-    optimiser = torch.optim.SGD(model.parameters(), lr=0.01)
+    optimiser = torch.optim.SGD(model.parameters(), lr=0.25)
+    # half the learning rate every 5 epochs
+    scheduler = torch.optim.lr_scheduler.StepLR(optimiser, step_size=5, gamma=0.5)
 
     for t in range(epochs):
         print(f"Epoch {t+1}\n")
+        start_time = time.time()
         train()
         train_test()
+        end_time = time.time()
+        print(f"Took {end_time-start_time} seconds")
+        scheduler.step()
     print("Done!")
 
     summary(model, input_size=(3, 32, 32))
