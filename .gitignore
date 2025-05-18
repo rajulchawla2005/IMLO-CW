@@ -1,4 +1,5 @@
 data/
 *.pth
+*.zip
 .vscode/
 __pycache__/
