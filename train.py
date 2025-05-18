@@ -6,39 +6,52 @@ from torchsummary import summary
 
 import time
 
-# apply augmentations
+# apply augmentations to create more inputs
 train_transform = transforms.Compose([
+    # pad with 4 pixels on each side (4 + 32 + 4) = 40
+    # randomly crop a 32x32 window out of that
     transforms.RandomCrop(32, padding=4),
+    # 50% chance of flipping the image horizontally
     transforms.RandomHorizontalFlip(),
+    # rotates the image by a random angle between -30 and +30
     transforms.RandomRotation(30),
+    # put data into matrix
     transforms.ToTensor()
 ])
 
-# get training data and augment it
+# get training data and apply augmentations
 training_data_aug = datasets.CIFAR10(
+    # save into data/
     root="data",
+    # training data
     train=True,
+    # download from internet
     download=True,
+    # apply augmentations
     transform=train_transform
 )
 
-# get training data and do not augment it
+# get training data and keep it raw
 training_data = datasets.CIFAR10(
+    # save into data/
     root="data",
+    # training data
     train=True,
+    # download from internet
     download=True,
+    # put data into matrix
     transform=transforms.ToTensor()
 )
 
-# reg training set first 0-30k images
+# regular training set is first 0-30k images
 reg_train_set = Subset(training_data, list(range(0, 30000)))
 # use last 30k-50k of the regular training data for validation
 val_set = Subset(training_data, list(range(30000, 50000)))
 
-# concat the reg training and the augmented training
+# combine the regular training and the augmented training (augmented has some from the validation set however it will be with modifications)
 training_set = ConcatDataset([reg_train_set, training_data_aug])
 
-# hyperparameter
+# hyperparameters
 EPOCHS = 25
 DEVICE = torch.device("cpu")
 BATCH_SIZE = 64
@@ -137,15 +150,15 @@ def validate():
 
 if __name__ == "__main__":
     # setup model
-    # train model
-    # store into .pth file
-
     model = NeuralNetwork().to(DEVICE)
+    # multi-classification loss function
     loss_fn = nn.CrossEntropyLoss()
+    # aggressive learning rate at the start
     optimiser = torch.optim.SGD(model.parameters(), lr=0.35, weight_decay=0.0001)
-    # half the learning rate every 5 EPOCHS
+    # half the learning rate every 5 epochs
     scheduler = torch.optim.lr_scheduler.StepLR(optimiser, step_size=5, gamma=0.5)
-
+    
+    # train model
     for t in range(EPOCHS):
         print(f"Epoch {t+1}\n")
         start_time = time.time()
@@ -158,5 +171,6 @@ if __name__ == "__main__":
 
     summary(model, input_size=(3, 32, 32))
 
+    # store into .pth file
     torch.save(model.state_dict(), "model.pth")
     print("Saved PyTorch Model State to model.pth")

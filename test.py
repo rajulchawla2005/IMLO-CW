@@ -7,9 +7,13 @@ import train
 
 # get testing data
 test_data = datasets.CIFAR10(
+    # save into data/
     root="data",
+    # testing data
     train=False,
+    # download from internet
     download=True,
+    # put into matrix
     transform=transforms.ToTensor()
 )
 
@@ -43,4 +47,5 @@ if __name__ == "__main__":
     # average 
     test_loss /= num_batches
     correct /= size
+    
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")

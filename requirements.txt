@@ -1,0 +1,7 @@
+Please load the conda environment from env.yml
+
+Ensure the device is connected to the internet, will pull the data from the server into data/
+
+train.py will run for a while, then save into model.pth
+
+test.py will load from model.pth, then run on the CIFAR10 test set
